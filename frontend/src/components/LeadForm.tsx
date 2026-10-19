@@ -7,10 +7,11 @@ import {
 } from "react";
 import { createBehavior, createLead } from "../api/client";
 import { useBehaviorTracker } from "../hooks/useBehavior";
-import type { AdminSettings, LeadPayload } from "../types";
+import type { AdminSettings, LeadPayload, Service } from "../types";
 import "./LeadForm.css";
 
 type Props = {
+  services: Service[];
   settings: AdminSettings;
 };
 
@@ -21,18 +22,13 @@ const empty: LeadPayload = {
   email: "",
   phone: "",
   business_info: "",
-  niche: "",
-  company_size: "",
-  task_volume: "",
-  need_volume: "",
-  role: "руководитель",
   budget: "",
   contact_method: "телефон",
   convenient_time: "",
   comments: "",
   deadline: "",
-  task_type: "",
   interested_product: "",
+  task_type: "тюнинг / дооснащение",
 };
 
 function parseBudget(value: string | null, fallback: number) {
@@ -44,7 +40,7 @@ function formatRub(n: number) {
   return new Intl.NumberFormat("ru-RU").format(n) + " ₽";
 }
 
-export function LeadForm({ settings }: Props) {
+export function LeadForm({ services, settings }: Props) {
   const { snapshot } = useBehaviorTracker();
   const [form, setForm] = useState<LeadPayload>(empty);
   const [status, setStatus] = useState<
@@ -53,11 +49,11 @@ export function LeadForm({ settings }: Props) {
   const [error, setError] = useState("");
 
   const min = useMemo(
-    () => parseBudget(settings.budget_min, 300_000),
+    () => parseBudget(settings.budget_min, 200_000),
     [settings.budget_min],
   );
   const max = useMemo(
-    () => parseBudget(settings.budget_max, 5_000_000),
+    () => parseBudget(settings.budget_max, 3_000_000),
     [settings.budget_max],
   );
   const mid = Math.round((min + max) / 2);
@@ -65,13 +61,13 @@ export function LeadForm({ settings }: Props) {
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
-      budget: String(mid),
+      budget: prev.budget || String(mid),
       interested_product:
         prev.interested_product ||
-        settings.services[0] ||
+        services[0]?.name ||
         "",
     }));
-  }, [mid, settings.services]);
+  }, [mid, services]);
 
   const set =
     (key: keyof LeadPayload) =>
@@ -85,6 +81,11 @@ export function LeadForm({ settings }: Props) {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!form.interested_product) {
+      setStatus("error");
+      setError("Выберите услугу");
+      return;
+    }
     setStatus("loading");
     setError("");
     try {
@@ -93,10 +94,15 @@ export function LeadForm({ settings }: Props) {
         middle_name: form.middle_name || null,
         email: form.email || null,
         phone: form.phone || null,
+        task_type: form.interested_product,
       });
       await createBehavior(snapshot(lead.id));
       setStatus("ok");
-      setForm({ ...empty, budget: String(mid) });
+      setForm({
+        ...empty,
+        budget: String(mid),
+        interested_product: services[0]?.name || "",
+      });
     } catch (err) {
       setStatus("error");
       setError(
@@ -113,7 +119,8 @@ export function LeadForm({ settings }: Props) {
         <p className="form-block__eyebrow">Готово</p>
         <h2 className="form-block__title">Заявка принята</h2>
         <p className="form-block__hint">
-          Мы свяжемся в удобное для вас время — без лишних писем.
+          Мастер свяжется в удобное время и уточнит детали
+          по автомобилю и объёму работ.
         </p>
       </section>
     );
@@ -122,12 +129,70 @@ export function LeadForm({ settings }: Props) {
   return (
     <section className="form-block" id="apply">
       <p className="form-block__eyebrow">Заявка</p>
-      <h2 className="form-block__title">Расскажите о задаче</h2>
+      <h2 className="form-block__title">
+        Запись на услугу
+      </h2>
       <p className="form-block__hint">
-        Несколько точных ответов — достаточно, чтобы начать.
+        Выберите направление и оставьте контакты — остальное
+        обсудим лично.
       </p>
 
       <form className="lead-form" onSubmit={onSubmit}>
+        <fieldset>
+          <legend>Услуга</legend>
+          <div className="service-grid">
+            {services.map((s) => {
+              const selected =
+                form.interested_product === s.name;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={
+                    selected
+                      ? "service-card is-active"
+                      : "service-card"
+                  }
+                  data-track={`service-${s.id}`}
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      interested_product: s.name,
+                    }))
+                  }
+                >
+                  <span className="service-card__name">
+                    {s.name}
+                  </span>
+                  {s.description && (
+                    <span className="service-card__desc">
+                      {s.description}
+                    </span>
+                  )}
+                  {(s.params.price_from ||
+                    s.params.duration) && (
+                    <span className="service-card__meta">
+                      {s.params.price_from
+                        ? `от ${formatRub(Number(s.params.price_from) || 0)}`
+                        : ""}
+                      {s.params.price_from &&
+                      s.params.duration
+                        ? " · "
+                        : ""}
+                      {s.params.duration || ""}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {services.length === 0 && (
+            <p className="lead-form__error">
+              Услуги пока не настроены. Загляните позже.
+            </p>
+          )}
+        </fieldset>
+
         <fieldset>
           <legend>Контакты</legend>
           <div className="grid-3">
@@ -159,6 +224,15 @@ export function LeadForm({ settings }: Props) {
           </div>
           <div className="grid-2">
             <label>
+              Телефон
+              <input
+                required
+                value={form.phone ?? ""}
+                onChange={set("phone")}
+                autoComplete="tel"
+              />
+            </label>
+            <label>
               Email
               <input
                 type="email"
@@ -167,102 +241,26 @@ export function LeadForm({ settings }: Props) {
                 autoComplete="email"
               />
             </label>
-            <label>
-              Телефон
-              <input
-                value={form.phone ?? ""}
-                onChange={set("phone")}
-                autoComplete="tel"
-              />
-            </label>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend>Бизнес</legend>
-          <div className="grid-2">
-            <label>
-              Ниша
-              <input
-                value={form.niche ?? ""}
-                onChange={set("niche")}
-              />
-            </label>
-            <label>
-              Размер компании
-              <input
-                value={form.company_size ?? ""}
-                onChange={set("company_size")}
-                placeholder="например, 50–200 человек"
-              />
-            </label>
-          </div>
+          <legend>Автомобиль</legend>
           <label>
-            О бизнесе
-            <textarea
-              rows={3}
+            Марка, модель, год
+            <input
+              required
               value={form.business_info ?? ""}
               onChange={set("business_info")}
+              placeholder="например, Porsche Cayenne 2022"
             />
           </label>
           <label>
-            Кто вы
-            <select
-              value={form.role ?? ""}
-              onChange={set("role")}
-            >
-              <option value="руководитель">Руководитель</option>
-              <option value="сотрудник">Сотрудник</option>
-            </select>
-          </label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Задача</legend>
-          <div className="grid-2">
-            <label>
-              Тип задачи
-              <input
-                value={form.task_type ?? ""}
-                onChange={set("task_type")}
-              />
-            </label>
-            <label>
-              Интересующий продукт
-              <select
-                value={form.interested_product ?? ""}
-                onChange={set("interested_product")}
-              >
-                {settings.services.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="grid-2">
-            <label>
-              Объём задачи
-              <input
-                value={form.task_volume ?? ""}
-                onChange={set("task_volume")}
-              />
-            </label>
-            <label>
-              Объём потребности
-              <input
-                value={form.need_volume ?? ""}
-                onChange={set("need_volume")}
-              />
-            </label>
-          </div>
-          <label>
-            Срок результата
+            Желаемый срок
             <input
               value={form.deadline ?? ""}
               onChange={set("deadline")}
-              placeholder="например, до конца квартала"
+              placeholder="например, к апрелю"
             />
           </label>
         </fieldset>
@@ -299,6 +297,7 @@ export function LeadForm({ settings }: Props) {
               >
                 <option value="телефон">Телефон</option>
                 <option value="telegram">Telegram</option>
+                <option value="whatsapp">WhatsApp</option>
                 <option value="email">Email</option>
               </select>
             </label>
@@ -307,7 +306,7 @@ export function LeadForm({ settings }: Props) {
               <input
                 value={form.convenient_time ?? ""}
                 onChange={set("convenient_time")}
-                placeholder="будни 11:00–16:00"
+                placeholder="будни 12:00–18:00"
               />
             </label>
           </div>
@@ -317,6 +316,7 @@ export function LeadForm({ settings }: Props) {
               rows={3}
               value={form.comments ?? ""}
               onChange={set("comments")}
+              placeholder="Пожелания по комплектации, цвету, срокам…"
             />
           </label>
         </fieldset>
@@ -331,7 +331,7 @@ export function LeadForm({ settings }: Props) {
           type="submit"
           className="lead-form__submit"
           data-track="submit-lead"
-          disabled={status === "loading"}
+          disabled={status === "loading" || services.length === 0}
         >
           {status === "loading" ? "Отправляем…" : "Отправить"}
         </button>

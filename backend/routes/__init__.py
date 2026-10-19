@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from routes.admin import router as admin_router
 from routes.behavior import router as behavior_router
 from routes.lead import router as lead_router
+from routes.service import router as service_router
 
 api_router = APIRouter()
 api_router.include_router(
@@ -16,6 +17,11 @@ api_router.include_router(
     behavior_router,
     prefix="/behaviors",
     tags=["behaviors"],
+)
+api_router.include_router(
+    service_router,
+    prefix="/services",
+    tags=["services"],
 )
 api_router.include_router(
     admin_router,

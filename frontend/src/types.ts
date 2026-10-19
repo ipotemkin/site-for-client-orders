@@ -1,3 +1,29 @@
+export type ServiceParams = {
+  price_from?: string;
+  price_to?: string;
+  duration?: string;
+  [key: string]: string | undefined;
+};
+
+export type Service = {
+  id: number;
+  name: string;
+  description: string | null;
+  params: ServiceParams;
+  is_active: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ServiceInput = {
+  name: string;
+  description?: string | null;
+  params?: ServiceParams;
+  is_active?: boolean;
+  sort_order?: number;
+};
+
 export type AdminSettings = {
   id?: number;
   services: string[];

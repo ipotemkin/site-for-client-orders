@@ -10,13 +10,14 @@ export function Hero({ onCta }: Props) {
       <div className="hero__glow" aria-hidden="true" />
       <p className="hero__brand">Autello</p>
       <h1 className="hero__title">
-        Тихий рост для тех,
+        Ателье премиального
         <br />
-        кто уже впереди
+        тюнинга и дооснащения
       </h1>
       <p className="hero__lead">
-        Персональный консалтинг без шума. Одна заявка —
-        и мы соберём решение под ваш масштаб.
+        Bose, итальянская покраска, аэрография и тонкая
+        работа с кузовом — без конвейера, только под ваш
+        автомобиль.
       </p>
       <button
         type="button"

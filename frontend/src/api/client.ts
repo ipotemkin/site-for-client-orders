@@ -3,6 +3,8 @@ import type {
   BehaviorPayload,
   Lead,
   LeadPayload,
+  Service,
+  ServiceInput,
 } from "../types";
 
 const API = "/api";
@@ -28,21 +30,63 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
+export function fetchServices(
+  activeOnly = false,
+): Promise<Service[]> {
+  const q = activeOnly ? "?active_only=true" : "";
+  return request<Service[]>(`/services/${q}`);
+}
+
+export function createService(
+  payload: ServiceInput,
+): Promise<Service> {
+  return request<Service>("/services/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateService(
+  id: number,
+  payload: ServiceInput,
+): Promise<Service> {
+  return request<Service>(`/services/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteService(id: number): Promise<void> {
+  return request<void>(`/services/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export async function fetchAdminSettings(): Promise<AdminSettings> {
   try {
     return await request<AdminSettings>("/admin/latest");
   } catch {
     return {
-      services: [
-        "Стратегия роста",
-        "Операционная эффективность",
-        "Цифровая трансформация",
-        "Выход на новые рынки",
-      ],
-      budget_min: "300000",
-      budget_max: "5000000",
+      services: [],
+      budget_min: "200000",
+      budget_max: "3000000",
     };
   }
+}
+
+export function saveAdminSettings(
+  payload: AdminSettings,
+): Promise<AdminSettings> {
+  if (payload.id) {
+    return request<AdminSettings>(`/admin/${payload.id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  }
+  return request<AdminSettings>("/admin/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function createLead(payload: LeadPayload): Promise<Lead> {
@@ -50,6 +94,10 @@ export function createLead(payload: LeadPayload): Promise<Lead> {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function fetchLeads(limit = 200): Promise<Lead[]> {
+  return request<Lead[]>(`/leads/?limit=${limit}`);
 }
 
 export function createBehavior(
