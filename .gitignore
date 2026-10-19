@@ -1,0 +1,5 @@
+.env
+registry/auth/htpasswd
+*.pem
+*.key
+*.crt
