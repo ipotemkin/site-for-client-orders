@@ -3,3 +3,10 @@ registry/auth/htpasswd
 *.pem
 *.key
 *.crt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/

@@ -112,22 +112,15 @@ Watchtower периодически проверяет образы контей
 
 ## pgAdmin: как смотреть БД
 
+Подключение к Postgres настраивается автоматически при старте
+стека (`pgadmin/entrypoint.sh` + переменные из `.env`): в дереве
+слева сразу появляется сервер **Postgres** (`host=postgres`,
+БД/`user` из `POSTGRES_*`).
+
 1. Откройте в браузере: `http://<server>/pgadmin/`
 2. Войдите с `PGADMIN_DEFAULT_EMAIL` и `PGADMIN_DEFAULT_PASSWORD`
    из `.env`.
-3. Добавьте сервер (Register → Server):
-
-   | Поле | Значение |
-   |------|----------|
-   | Name | любое (например `local`) |
-   | Host | `postgres` (имя сервиса в Docker) |
-   | Port | `5432` |
-   | Maintenance database | значение `POSTGRES_DB` |
-   | Username | значение `POSTGRES_USER` |
-   | Password | значение `POSTGRES_PASSWORD` |
-
-Host именно `postgres`, не `localhost`: pgAdmin ходит в БД
-по внутренней Docker-сети.
+3. Раскройте **Servers → Postgres → Databases → `<POSTGRES_DB>`**.
 
 Прямого URL/порта Postgres на хосте нет — это сделано намеренно.
 
