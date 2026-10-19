@@ -1,0 +1,98 @@
+:root {
+  --bg-0: #e8ecf1;
+  --bg-1: #f7f8fa;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --line: rgba(29, 29, 31, 0.12);
+  --accent: #0071e3;
+  --accent-ink: #ffffff;
+  --surface: rgba(255, 255, 255, 0.72);
+  --shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+  --radius: 18px;
+  --font-sans: "Outfit", "Segoe UI", sans-serif;
+  --font-display: "Newsreader", Georgia, serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+  background:
+    radial-gradient(
+      1200px 600px at 12% -10%,
+      rgba(0, 113, 227, 0.16),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 500px at 90% 8%,
+      rgba(90, 110, 140, 0.18),
+      transparent 50%
+    ),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1) 42%, #fff);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.page {
+  width: min(1120px, calc(100% - 2.5rem));
+  margin: 0 auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.8;
+  }
+}

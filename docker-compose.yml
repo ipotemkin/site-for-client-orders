@@ -22,6 +22,7 @@ services:
     depends_on:
       - pgadmin
       - backend
+      - frontend
     networks:
       - edge
       - internal
@@ -163,6 +164,23 @@ services:
     # Intentionally no `ports:` — do not expose API on the host.
     labels:
       # Local build: do not let Watchtower replace with registry
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # ------------------------------------------------------------------
+  # Frontend (React) — private: no host ports published.
+  # Served only via Nginx on location /.
+  # Temporary: build from ./frontend context.
+  # ------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend:local
+    container_name: frontend
+    restart: unless-stopped
+    networks:
+      - internal
+    labels:
       - "com.centurylinklabs.watchtower.enable=false"
 
 networks:
