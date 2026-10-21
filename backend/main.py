@@ -44,12 +44,14 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
     # Nginx mounts us under /api/ (prefix stripped upstream).
-    # root_path makes Swagger/OpenAPI use /api/docs and
-    # /api/openapi.json in the browser.
     root_path="/api",
-    docs_url="/docs",
-    openapi_url="/openapi.json",
-    redoc_url="/redoc",
+    # Public Swagger/ReDoc disabled. To restore:
+    #   docs_url="/docs",
+    #   openapi_url="/openapi.json",
+    #   redoc_url="/redoc",
+    docs_url=None,
+    openapi_url=None,
+    redoc_url=None,
 )
 app.include_router(api_router)
 

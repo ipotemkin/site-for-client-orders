@@ -12,7 +12,7 @@
 | Лендинг + заявка | `/` | Выбор услуги, контакты, авто, бюджет, способ связи |
 | Админка | `/admin` | CRUD услуг, диапазон бюджета, заявки (JWT) |
 | Вход | `/admin/login` | Логин/пароль; регистрация только если нет админов |
-| API / Swagger | `/api/docs` | FastAPI |
+| API | `/api/` | FastAPI (Swagger `/api/docs` выключен) |
 | pgAdmin | `/pgadmin/` | Просмотр БД |
 
 Фронтенд (React + TypeScript) собирает заявку и поведение
@@ -141,7 +141,8 @@ docker compose up -d --build
 | `http://<host>/admin` | админка (нужен JWT) |
 | `http://<host>/admin/login` | вход / bootstrap-регистрация |
 | `http://<host>/api/auth/bootstrap-status` | `{ "registration_open": … }` |
-| `http://<host>/api/docs` | Swagger |
+| `http://<host>/api/health` | `{"status":"ok"}` |
+| ~~`http://<host>/api/docs`~~ | Swagger выключен (см. `backend/main.py`) |
 | `http://<host>/api/health` | `{"status":"ok"}` |
 | `http://<host>/pgadmin/` | вход по `PGADMIN_*` из `.env` |
 

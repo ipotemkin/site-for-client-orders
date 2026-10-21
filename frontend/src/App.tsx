@@ -21,6 +21,8 @@ export default function App() {
               </RequireAuth>
             }
           />
+          <Route path="/api" element={<NotFoundPage />} />
+          <Route path="/api/*" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
