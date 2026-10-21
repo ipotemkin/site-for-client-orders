@@ -96,8 +96,9 @@ services:
     image: registry:2
     container_name: registry
     restart: unless-stopped
-    ports:
-      - "${REGISTRY_PORT:-5000}:5000"
+    # Public access disabled — uncomment to expose again:
+    # ports:
+    #   - "${REGISTRY_PORT:-5000}:5000"
     environment:
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
@@ -146,6 +147,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        # If Docker Hub returns 429, set in .env:
+        #   BACKEND_BASE_IMAGE=backend:local
+        PYTHON_IMAGE: ${BACKEND_BASE_IMAGE:-python:3.12-slim}
     image: backend:local
     container_name: backend
     restart: unless-stopped
@@ -156,6 +161,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-1440}
     depends_on:
       postgres:
         condition: service_healthy

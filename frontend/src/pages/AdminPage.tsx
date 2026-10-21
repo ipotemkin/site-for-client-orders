@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   createService,
   deleteService,
   fetchAdminSettings,
-  fetchLeads,
   fetchServices,
   saveAdminSettings,
   updateService,
 } from "../api/client";
-import type { AdminSettings, Lead, Service } from "../types";
+import { useAuth } from "../auth/AuthContext";
+import { LeadsIntelPanel } from "../components/LeadsIntelPanel";
+import { StatsModal } from "../components/StatsModal";
+import type { AdminSettings, Service } from "../types";
 import "./AdminPage.css";
 
 type Draft = {
@@ -43,30 +45,28 @@ function toDraft(s: Service): Draft {
   };
 }
 
-function formatDate(value?: string) {
-  if (!value) {
-    return "—";
-  }
-  return new Date(value).toLocaleString("ru-RU");
-}
-
 export function AdminPage() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [settings, setSettings] =
     useState<AdminSettings | null>(null);
   const [draft, setDraft] = useState<Draft>(blankDraft());
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [statsOpen, setStatsOpen] = useState(false);
+
+  const onLogout = () => {
+    logout();
+    navigate("/admin/login", { replace: true });
+  };
 
   const reload = useCallback(async () => {
-    const [svc, leadList, admin] = await Promise.all([
+    const [svc, admin] = await Promise.all([
       fetchServices(false),
-      fetchLeads(),
       fetchAdminSettings(),
     ]);
     setServices(svc);
-    setLeads(leadList);
     setSettings(admin);
   }, []);
 
@@ -160,14 +160,34 @@ export function AdminPage() {
           <p className="admin__brand">Autello</p>
           <h1>Админ-панель</h1>
           <p className="admin__sub">
-            Услуги ателье и заявки клиентов. Авторизация
-            появится позже.
+            Услуги ателье и заявки клиентов.
           </p>
         </div>
-        <Link className="admin__link" to="/">
-          На сайт
-        </Link>
+        <div className="admin__head-actions">
+          <button
+            type="button"
+            className="admin__link admin__link--ghost"
+            onClick={() => setStatsOpen(true)}
+          >
+            Статистика
+          </button>
+          <button
+            type="button"
+            className="admin__link admin__link--ghost"
+            onClick={onLogout}
+          >
+            Выйти
+          </button>
+          <Link className="admin__link" to="/">
+            На сайт
+          </Link>
+        </div>
       </header>
+
+      <StatsModal
+        open={statsOpen}
+        onClose={() => setStatsOpen(false)}
+      />
 
       {message && <p className="admin__toast">{message}</p>}
 
@@ -353,68 +373,7 @@ export function AdminPage() {
         )}
       </section>
 
-      <section className="admin__section">
-        <h2>Заявки клиентов</h2>
-        <div className="admin__table-wrap">
-          <table className="admin__table">
-            <thead>
-              <tr>
-                <th>Дата</th>
-                <th>Клиент</th>
-                <th>Контакты</th>
-                <th>Авто</th>
-                <th>Услуга</th>
-                <th>Бюджет</th>
-                <th>Связь</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead) => (
-                <tr key={lead.id}>
-                  <td>{formatDate(lead.created_at)}</td>
-                  <td>
-                    {[
-                      lead.last_name,
-                      lead.first_name,
-                      lead.middle_name,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  </td>
-                  <td>
-                    {[lead.phone, lead.email]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </td>
-                  <td>{lead.business_info || "—"}</td>
-                  <td>{lead.interested_product || "—"}</td>
-                  <td>
-                    {lead.budget
-                      ? `${Number(lead.budget).toLocaleString("ru-RU")} ₽`
-                      : "—"}
-                  </td>
-                  <td>
-                    {[
-                      lead.contact_method,
-                      lead.convenient_time,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "—"}
-                    {lead.comments ? (
-                      <div className="admin__comment">
-                        {lead.comments}
-                      </div>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {leads.length === 0 && (
-            <p className="admin__empty">Заявок пока нет</p>
-          )}
-        </div>
-      </section>
+      <LeadsIntelPanel />
     </main>
   );
 }

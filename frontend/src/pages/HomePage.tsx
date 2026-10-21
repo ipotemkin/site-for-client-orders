@@ -5,9 +5,11 @@ import {
 } from "../api/client";
 import { Hero } from "../components/Hero";
 import { LeadForm } from "../components/LeadForm";
+import { usePageMetrics } from "../hooks/usePageMetrics";
 import type { AdminSettings, Service } from "../types";
 
 export function HomePage() {
+  usePageMetrics();
   const [services, setServices] = useState<Service[]>([]);
   const [settings, setSettings] =
     useState<AdminSettings | null>(null);

@@ -10,13 +10,15 @@
 | Страница | URL | Назначение |
 |----------|-----|------------|
 | Лендинг + заявка | `/` | Выбор услуги, контакты, авто, бюджет, способ связи |
-| Админка | `/admin` | CRUD услуг, диапазон бюджета на форме, список заявок |
+| Админка | `/admin` | CRUD услуг, диапазон бюджета, заявки (JWT) |
+| Вход | `/admin/login` | Логин/пароль; регистрация только если нет админов |
 | API / Swagger | `/api/docs` | FastAPI |
 | pgAdmin | `/pgadmin/` | Просмотр БД |
 
 Фронтенд (React + TypeScript) собирает заявку и поведение
 пользователя на странице, отправляет пакет в backend.
-Backend пишет в Postgres. Авторизация админки — позже.
+Backend пишет в Postgres. Админка защищена JWT
+(`Authorization: Bearer …`).
 
 ### Данные
 
@@ -25,6 +27,9 @@ Backend пишет в Postgres. Авторизация админки — поз
 - **leads** — заявки клиентов
 - **lead_behaviors** — метрики поведения (1:1 с заявкой)
 - **admin_settings** — общий min/max бюджета на ползунке формы
+- **admins** — операторы админки (login + password_hash)
+- **behavior_metrics** — посекундная телеметрия лендинга
+  (время на странице, клики, позиции курсора для хитмапа)
 
 ## Состав стека
 
@@ -63,12 +68,13 @@ Frontend и Backend сейчас собираются из локального 
 .
 ├── backend/                 # FastAPI
 │   ├── main.py
-│   ├── core/                # пул Postgres (asyncpg)
-│   ├── models/              # Lead, Behavior, Service, Admin + CRUD
-│   └── routes/
+│   ├── core/                # Postgres pool, JWT/security
+│   ├── models/              # Lead, Service, AdminUser + CRUD
+│   └── routes/              # auth, leads, services, …
 ├── frontend/                # React + TypeScript (Vite)
 │   └── src/
-│       ├── pages/           # HomePage, AdminPage
+│       ├── pages/           # HomePage, AdminPage, LoginPage
+│       ├── auth/            # JWT localStorage + guards
 │       ├── components/
 │       └── api/
 ├── nginx/nginx.conf
@@ -86,8 +92,20 @@ Frontend и Backend сейчас собираются из локального 
 
 ```bash
 cp .env.example .env
-# задайте POSTGRES_*, PGADMIN_*, REGISTRY_*
+# задайте POSTGRES_*, PGADMIN_*, REGISTRY_*, JWT_SECRET
 ```
+
+`JWT_SECRET` — длинная случайная строка (обязательна для
+backend). `JWT_EXPIRE_MINUTES` по умолчанию `1440` (сутки).
+
+### Админка: первый вход
+
+1. Откройте `/admin` — редирект на `/admin/login`.
+2. Пока в таблице `admins` никого нет, видна кнопка
+   **Зарегистрироваться** (создаёт первого админа и JWT).
+3. После появления хотя бы одного админа регистрация
+   закрывается (`POST /api/auth/register` → 403), остаётся
+   только вход.
 
 ### 2. Auth для Registry (если нужен push/pull)
 
@@ -99,10 +117,20 @@ chmod +x scripts/create-registry-auth.sh
 ### 3. Поднять стек
 
 ```bash
+# Frontend image expects ./frontend/dist — build SPA first:
+(cd frontend && npm ci && npm run build)
+
 docker compose up -d --build
 ```
 
 Первый запуск соберёт образы `backend:local` и `frontend:local`.
+
+Если Docker Hub отвечает `429 Too Many Requests` на
+`python:3.12-slim`, в `.env` на сервере добавьте
+`BACKEND_BASE_IMAGE=backend:local` (переиспользовать уже
+скачанный Python из текущего образа) и снова
+`docker compose up -d --build`. Frontend больше не тянет
+`node:` — только `nginx:1.27-alpine` + готовый `dist`.
 
 ### 4. Проверка
 
@@ -110,7 +138,9 @@ docker compose up -d --build
 |-----|----------|
 | `http://<host>/health` | `ok` |
 | `http://<host>/` | лендинг Autello |
-| `http://<host>/admin` | админка |
+| `http://<host>/admin` | админка (нужен JWT) |
+| `http://<host>/admin/login` | вход / bootstrap-регистрация |
+| `http://<host>/api/auth/bootstrap-status` | `{ "registration_open": … }` |
 | `http://<host>/api/docs` | Swagger |
 | `http://<host>/api/health` | `{"status":"ok"}` |
 | `http://<host>/pgadmin/` | вход по `PGADMIN_*` из `.env` |

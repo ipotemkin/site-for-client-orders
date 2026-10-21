@@ -57,6 +57,39 @@ export type Lead = LeadPayload & {
   created_at?: string;
 };
 
+export type LeadAnalysis = {
+  temperature: "hot" | "warm" | "cold";
+  temperature_label: string;
+  score: number;
+  is_urgent: boolean;
+  worth_time: boolean;
+  worth_time_label: string;
+  needs_personal_manager: boolean;
+  department: string;
+  department_label: string;
+  reasons: string[];
+};
+
+export type ScoredLead = Lead & {
+  analysis: LeadAnalysis;
+};
+
+export type LeadQueueStats = {
+  total: number;
+  hot: number;
+  warm: number;
+  cold: number;
+  urgent: number;
+  with_manager: number;
+  avg_score: number;
+  by_department: Record<string, number>;
+};
+
+export type LeadQueueResponse = {
+  stats: LeadQueueStats;
+  items: ScoredLead[];
+};
+
 export type BehaviorPayload = {
   id: string;
   time_on_page_seconds: number;
@@ -64,4 +97,35 @@ export type BehaviorPayload = {
   cursor_hotspots: { x: number; y: number; at: number }[];
   return_count: number;
   raw_metrics: Record<string, unknown>;
+};
+
+export type TokenResponse = {
+  access_token: string;
+  token_type: string;
+};
+
+export type BehaviorMetricPayload = {
+  application_id: number;
+  time_on_page: number;
+  buttons_clicked: string;
+  cursor_positions: string;
+  return_frequency: number;
+};
+
+export type PeriodTimeStats = {
+  avg_seconds: number;
+  max_seconds: number;
+};
+
+export type HeatPoint = {
+  x: number;
+  y: number;
+  weight: number;
+};
+
+export type BehaviorStats = {
+  day: PeriodTimeStats;
+  week: PeriodTimeStats;
+  month: PeriodTimeStats;
+  heatmap: HeatPoint[];
 };

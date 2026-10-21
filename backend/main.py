@@ -13,7 +13,9 @@ from fastapi import FastAPI
 
 from core.database import close_pool, init_pool
 from models.admin import AdminSettingsCRUD
+from models.admin_user import AdminUserCRUD
 from models.behavior import LeadBehaviorCRUD
+from models.behavior_metric import BehaviorMetricCRUD
 from models.lead import LeadCRUD
 from models.service import ServiceCRUD
 from routes import api_router
@@ -25,6 +27,8 @@ async def _ensure_schema() -> None:
     await LeadBehaviorCRUD.ensure_table()
     await AdminSettingsCRUD.ensure_table()
     await ServiceCRUD.ensure_table()
+    await AdminUserCRUD.ensure_table()
+    await BehaviorMetricCRUD.ensure_table()
 
 
 @asynccontextmanager

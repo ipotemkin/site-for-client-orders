@@ -1,4 +1,7 @@
-FROM python:3.12-slim
+# Default pulls from Docker Hub. On a rate-limited host reuse the
+# already-built image: BACKEND_BASE_IMAGE=backend:local
+ARG PYTHON_IMAGE=python:3.12-slim
+FROM ${PYTHON_IMAGE}
 
 WORKDIR /app
 
@@ -13,4 +16,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn","main:app","--host", "0.0.0.0","--port", "8000","--root-path", "/api"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/api"]

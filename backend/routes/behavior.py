@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
+from core.deps import get_current_admin
+from models.admin_user import AdminUser
 from models.behavior import LeadBehavior, LeadBehaviorCRUD
 
 router = APIRouter()
@@ -25,17 +27,21 @@ async def create_behavior(
 @router.get("/", response_model=list[LeadBehavior])
 async def list_behaviors(
     limit: int = 100,
+    _: AdminUser = Depends(get_current_admin),
 ) -> list[LeadBehavior]:
     return await LeadBehaviorCRUD.list_all(limit=limit)
 
 
 @router.get("/{behavior_id}", response_model=LeadBehavior)
-async def get_behavior(behavior_id: UUID) -> LeadBehavior:
+async def get_behavior(
+    behavior_id: UUID,
+    _: AdminUser = Depends(get_current_admin),
+) -> LeadBehavior:
     item = await LeadBehaviorCRUD.get_by_id(behavior_id)
     if item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Behavior not found",
+            detail="Метрики не найдены",
         )
     return item
 
@@ -44,6 +50,7 @@ async def get_behavior(behavior_id: UUID) -> LeadBehavior:
 async def update_behavior(
     behavior_id: UUID,
     payload: LeadBehavior,
+    _: AdminUser = Depends(get_current_admin),
 ) -> LeadBehavior:
     item = await LeadBehaviorCRUD.update(
         behavior_id,
@@ -52,7 +59,7 @@ async def update_behavior(
     if item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Behavior not found",
+            detail="Метрики не найдены",
         )
     return item
 
@@ -61,11 +68,14 @@ async def update_behavior(
     "/{behavior_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_behavior(behavior_id: UUID) -> Response:
+async def delete_behavior(
+    behavior_id: UUID,
+    _: AdminUser = Depends(get_current_admin),
+) -> Response:
     deleted = await LeadBehaviorCRUD.delete(behavior_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Behavior not found",
+            detail="Метрики не найдены",
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
